@@ -6,6 +6,13 @@ class ShortenedUrl < ApplicationRecord
         class_name: :User, 
         primary_key: :id,
         foreign_key: :submitter_id
+    
+    has_many :visits,
+        primary_key: :id,
+        foreign_key: :shortened_url_id,
+        class_name: :Visit
+
+    has_many :visitors, -> { distinct },through: :visits, source: :visitor
 
     def self.random_code
         loop do
@@ -20,5 +27,17 @@ class ShortenedUrl < ApplicationRecord
             long_url: input_url,
             submitter_id: user.id
         )
+    end
+
+    def num_clicks
+        visits.count
+    end
+
+    def num_uniques
+        visitors.count
+    end
+
+    def num_recent
+        visitors.where("visits.created_at > ?", 10.minutes.ago).count
     end
 end
