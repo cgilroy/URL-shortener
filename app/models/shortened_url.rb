@@ -1,7 +1,7 @@
 class ShortenedUrl < ApplicationRecord
     validates :short_url, :long_url, :submitter_id, presence: true
     validates :short_url, uniqueness: true
-    validate :no_spamming
+    validate :no_spamming, :nonpremium_max
 
     belongs_to :submitter,
         class_name: :User, 
@@ -54,5 +54,11 @@ class ShortenedUrl < ApplicationRecord
         .where(submitter_id: submitter_id).count
 
         errors.add(:max, "number of urls is 5 per minute") if recent_posts >= 5
+    end
+
+    def nonpremium_max
+        total_urls = ShortenedUrl.where(submitter_id: submitter_id).count
+
+        errors.add(:member, "must be premium to make more than 5 short urls") if total_urls >= 5
     end
 end
