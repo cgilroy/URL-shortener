@@ -11,14 +11,16 @@ class ShortenedUrl < ApplicationRecord
     has_many :visits,
         primary_key: :id,
         foreign_key: :shortened_url_id,
-        class_name: :Visit
+        class_name: :Visit,
+        dependent: :destroy
 
     has_many :visitors, -> { distinct },through: :visits, source: :visitor
 
     has_many :taggings,
         class_name: :Tagging,
         primary_key: :id,
-        foreign_key: :shortened_url_id
+        foreign_key: :shortened_url_id,
+        dependent: :destroy
     
     has_many :tag_topics, through: :taggings, source: :tag_topic
 
@@ -60,5 +62,25 @@ class ShortenedUrl < ApplicationRecord
         total_urls = ShortenedUrl.where(submitter_id: submitter_id).count
 
         errors.add(:member, "must be premium to make more than 5 short urls") if total_urls >= 5
+    end
+
+    def self.prune(mins)
+        ShortenedUrl.joins('JOIN users ON users.id = shortened_urls.submitter_id')
+        .joins('LEFT JOIN visits ON visits.shortened_url_id = shortened_urls.id')
+        .where('(shortened_urls.id IN (
+            SELECT 
+                shortened_urls.id
+            FROM
+                shortened_urls
+            JOIN
+                visits ON visits.shortened_url_id = shortened_urls.id
+            GROUP BY
+                shortened_urls.id
+            HAVING
+                MAX(visits.created_at) < ?
+
+            ) OR (visits.id = NULL AND shortened_urls.created_at < ?)
+            ) AND premium = FALSE
+        ',mins.minutes.ago,mins.minutes.ago).destroy_all
     end
 end

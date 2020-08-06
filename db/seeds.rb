@@ -5,7 +5,7 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
-user_1 = User.create!(email: 'connormcdavid@oilers.com')
+user_1 = User.create!(email: 'connormcdavid@oilers.com', premium:true)
 user_2 = User.create!(email: 'jeffbridges@gmail.com')
 short_url_1 = ShortenedUrl.create_short_url!(user_1,'www.lolcats.com')
 short_url_2 = ShortenedUrl.create_short_url!(user_1,'www.oilers.com')
